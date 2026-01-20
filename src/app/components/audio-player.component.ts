@@ -55,8 +55,7 @@ export class AudioPlayerComponent implements AfterViewInit, OnDestroy {
       return;
     }
 
-    const headers = this.auth.userAuthHeaders();
-    this.progressApi.getProgress(this.bookId, this.contentType, headers).subscribe({
+    this.progressApi.getProgress(this.bookId, this.contentType).subscribe({
       next: (res) => {
         if (!this.audioRef?.nativeElement) return;
         const secs = Math.floor((res.positionMillis ?? 0) / 1000);
@@ -101,8 +100,7 @@ export class AudioPlayerComponent implements AfterViewInit, OnDestroy {
     const posMs = Math.floor(audio.currentTime * 1000);
     if (!force && posMs <= 0) return;
 
-    const headers = this.auth.userAuthHeaders();
-    this.progressApi.upsert({ bookId: this.bookId, contentType: this.contentType, positionMillis: posMs }, headers).subscribe();
+    this.progressApi.upsert({ bookId: this.bookId, contentType: this.contentType, positionMillis: posMs }).subscribe();
   }
 }
 

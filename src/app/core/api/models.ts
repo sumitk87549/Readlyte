@@ -26,6 +26,23 @@ export interface BookDto {
   updatedAt?: string;
 }
 
+export interface BookListItemDto {
+  id: number;
+  title: string;
+  author?: string | null;
+  description?: string | null;
+  language?: string | null;
+  coverUrl?: string | null;
+  hasSummary: boolean;
+  hasTranslation: boolean;
+  hasBookAudio: boolean;
+  hasSummaryAudio: boolean;
+  hasTranslationAudio: boolean;
+  excerpt?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export type ContentType = 'BOOK_AUDIO' | 'SUMMARY_AUDIO' | 'TRANSLATION_AUDIO';
 
 export interface ProgressResponse {

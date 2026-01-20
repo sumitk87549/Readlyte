@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { BookService } from '../../core/api/book.service';
 import { BookDto } from '../../core/api/models';
 import { AuthService } from '../../core/auth/auth.service';
+import { ToastService } from '../../core/ui/toast.service';
 
 @Component({
   selector: 'app-admin-dashboard-page',
@@ -49,8 +50,18 @@ import { AuthService } from '../../core/auth/auth.service';
         </div>
 
         <div class="field" style="grid-column: 1 / -1">
+          <label>Summary text file</label>
+          <input type="file" (change)="summaryTextFile = pick($event)" />
+        </div>
+
+        <div class="field" style="grid-column: 1 / -1">
           <label>Translation text</label>
           <textarea rows="6" [value]="translationText" (input)="translationText = $any($event.target).value"></textarea>
+        </div>
+
+        <div class="field" style="grid-column: 1 / -1">
+          <label>Translation text file</label>
+          <input type="file" (change)="translationTextFile = pick($event)" />
         </div>
 
         <div class="field">
@@ -112,6 +123,7 @@ export class AdminDashboardPageComponent {
   private auth = inject(AuthService);
   private router = inject(Router);
   private booksApi = inject(BookService);
+  private toast = inject(ToastService);
 
   title = '';
   author = '';
@@ -119,6 +131,9 @@ export class AdminDashboardPageComponent {
   description = '';
   summaryText = '';
   translationText = '';
+
+  summaryTextFile: File | null = null;
+  translationTextFile: File | null = null;
 
   cover: File | null = null;
   bookFile: File | null = null;
@@ -134,6 +149,10 @@ export class AdminDashboardPageComponent {
     const input = evt.target as HTMLInputElement;
     if (!input.files || input.files.length === 0) return null;
     return input.files.item(0);
+  }
+
+  hasTextFiles(): boolean {
+    return !!(this.summaryTextFile || this.translationTextFile);
   }
 
   submit(): void {
@@ -153,6 +172,9 @@ export class AdminDashboardPageComponent {
     if (this.summaryText.trim()) fd.append('summaryText', this.summaryText);
     if (this.translationText.trim()) fd.append('translationText', this.translationText);
 
+    if (this.summaryTextFile) fd.append('summaryTextFile', this.summaryTextFile);
+    if (this.translationTextFile) fd.append('translationTextFile', this.translationTextFile);
+
     if (this.cover) fd.append('cover', this.cover);
     if (this.bookFile) fd.append('bookFile', this.bookFile);
     if (this.bookAudio) fd.append('bookAudio', this.bookAudio);
@@ -161,14 +183,16 @@ export class AdminDashboardPageComponent {
 
     this.submitting.set(true);
 
-    this.booksApi.createBook(fd, this.auth.adminAuthHeaders()).subscribe({
+    this.booksApi.createBook(fd).subscribe({
       next: (res) => {
         this.createdBook.set(res);
         this.submitting.set(false);
+        this.toast.success('Book uploaded successfully');
       },
       error: (err) => {
         this.error.set(err?.error?.message ?? 'Upload failed');
         this.submitting.set(false);
+        this.toast.error(this.error() ?? 'Upload failed');
       }
     });
   }

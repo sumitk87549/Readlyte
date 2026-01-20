@@ -3,7 +3,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { apiUrl } from '../../core/api/api-base';
 import { BookService } from '../../core/api/book.service';
-import { BookDto } from '../../core/api/models';
+import { BookListItemDto } from '../../core/api/models';
 
 type SortKey = 'title' | 'createdAt';
 
@@ -34,14 +34,26 @@ type SortKey = 'title' | 'createdAt';
     </div>
 
     <div class="grid" style="margin-top: 14px" *ngIf="!loading()">
-      <a class="card book" *ngFor="let b of filteredBooks()" [routerLink]="['/books', b.id]">
+      <a class="card hover book" *ngFor="let b of filteredBooks()" [routerLink]="['/books', b.id]">
         <div class="cover" *ngIf="b.coverUrl">
           <img [src]="apiUrl(b.coverUrl)" alt="cover" />
         </div>
-        <div>
-          <div class="title">{{ b.title }}</div>
+        <div class="meta">
+          <div class="title-row">
+            <div class="title">{{ b.title }}</div>
+            <span class="badge brand" *ngIf="b.language">{{ b.language }}</span>
+          </div>
           <div class="muted" *ngIf="b.author">{{ b.author }}</div>
-          <div class="muted small" *ngIf="b.language">{{ b.language }}</div>
+
+          <div class="badges">
+            <span class="badge good" *ngIf="b.hasSummary">Summary</span>
+            <span class="badge good" *ngIf="b.hasTranslation">Translation</span>
+            <span class="badge brand" *ngIf="b.hasBookAudio">Book audio</span>
+            <span class="badge brand" *ngIf="b.hasSummaryAudio">Summary audio</span>
+            <span class="badge brand" *ngIf="b.hasTranslationAudio">Translation audio</span>
+          </div>
+
+          <div class="excerpt" *ngIf="b.excerpt">{{ b.excerpt }}</div>
         </div>
       </a>
     </div>
@@ -75,11 +87,33 @@ type SortKey = 'title' | 'createdAt';
         object-fit: cover;
         display: block;
       }
+      .meta {
+        display: grid;
+        gap: 8px;
+      }
+      .title-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 10px;
+      }
       .title {
         font-weight: 700;
       }
-      .small {
-        font-size: 12px;
+      .badges {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 2px;
+      }
+      .excerpt {
+        color: rgba(255, 255, 255, 0.78);
+        font-size: 13px;
+        line-height: 1.45;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
       }
       @media (max-width: 1000px) {
         .grid {
@@ -99,7 +133,7 @@ export class BooksPageComponent {
 
   loading = signal(false);
   error = signal<string | null>(null);
-  books = signal<BookDto[]>([]);
+  books = signal<BookListItemDto[]>([]);
 
   query = signal('');
   sortKey = signal<SortKey>('createdAt');
@@ -114,7 +148,8 @@ export class BooksPageComponent {
       if (!q) return true;
       const title = (b.title ?? '').toLowerCase();
       const author = (b.author ?? '').toLowerCase();
-      return title.includes(q) || author.includes(q);
+      const excerpt = (b.excerpt ?? '').toLowerCase();
+      return title.includes(q) || author.includes(q) || excerpt.includes(q);
     });
 
     const sorted = [...filtered].sort((a, b) => {
